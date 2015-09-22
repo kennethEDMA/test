@@ -1,0 +1,194 @@
+@model EquiSafe.Web.ViewModels.Repository.Add
+
+@section customStyles
+{
+    @Styles.Render("~/Content/css/dropzonecss")
+}
+
+
+@section customScripts
+{
+    @Scripts.Render("~/Content/scripts/dropzonescript")
+
+<script>
+    //Script to handle several changes on Dropzone functionalities
+    Dropzone.options.dropzoneForm = {
+        // The configuration we've talked about above
+        previewsContainer: "#previews",
+        clickable: '#previews',
+        paramName: "ObjFiles",
+        autoProcessQueue: false,
+        uploadMultiple: true,
+        parallelUploads: 10,
+        maxFiles: 10,
+        maxFilesize: 25, // MB
+        //acceptedFiles: 'image/jpeg, image/jpg, image/png',
+        acceptedFiles: '.pdf',
+        // The setting up of the dropzone
+        init: function () {
+            var myDropzone = this;
+            this.on("error", function (file, message) {
+                //Remove the row of details
+                delRowDetails(file.previewElement.children[1].children[1].children[0].innerText);
+                //remove the trash
+                file.previewElement.removeChild(file.previewElement.children[6]);
+                //capture event click in order to delete the preview
+                file.previewElement.addEventListener("click", function (e) {
+                    myDropzone.removeFile(file);
+                });
+            });
+            this.on("addedfile", function (file) {
+                // Create the remove button
+                var removeButton = Dropzone.createElement("<div align=\"center\"><i class=\"fa fa-trash-o\"></i></div>");
+
+                // Capture the Dropzone instance as closure.
+                var _this = this;
+
+                // Listen to the click event
+                removeButton.addEventListener("click", function (e) {
+                    // Make sure the button click doesn't submit the form:
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Remove the file preview.
+                    _this.removeFile(file);
+
+                    //Remove the row of Details 
+                    delRowDetails(file.previewElement.children[1].children[1].children[0].innerText);
+                });
+
+                // Add the button to the file preview element.
+                file.previewElement.appendChild(removeButton);
+
+                //Remove the loading bar
+                file.previewElement.children[2].className = "dz-complete";
+
+                //Add a new input boxes to edit the details
+                addRowDetails(file.previewElement.children[1].children[1].children[0].innerText);
+
+                //Dont display the message
+                document.getElementById("dropzoneMessage").style.display = "none";
+            });
+
+            // First change the button to actually tell Dropzone to process the queue.
+            document.getElementById("submitbtn").addEventListener("click", function (e) {
+                // Make sure that the form isn't actually being sent.
+                e.preventDefault();
+                e.stopPropagation();
+                myDropzone.processQueue();
+            });
+
+            // Listen to the sendingmultiple event. In this case, it's the sendingmultiple event instead
+            // of the sending event because uploadMultiple is set to true.
+            this.on("sendingmultiple", function () {
+                // Gets triggered when the form is actually being sent.
+                // Hide the success button or the complete form.
+            });
+            this.on("successmultiple", function (files, response) {
+                // Gets triggered when the files have successfully been sent.
+                // Redirect user or notify of success.
+            });
+            this.on("errormultiple", function (files, response) {
+                // Gets triggered when there was an error sending the files.
+                // Maybe show form again, and notify user of error
+            });
+        }
+    }
+
+    //Adding a new set of details
+    function addRowDetails(name) {
+        editableDetails = document.getElementById("EditableDetails");
+        Container = document.createElement("section");
+        Container.id = name;
+        Container.className = "col-md-4";
+        Container.style.fontSize="14px";
+        Row = document.createElement("div");
+        Row.className = "box box-primary";
+        Row.style.padding = "10px";
+        dl = document.createElement("dl");
+        dl.className = "dl-horizontal";
+        //Adding the ressource Name
+        RessourceNameTitle = document.createElement("dt");
+        RessourceNameTitle.innerText = "Ressource Name";
+        RessourceNameContent = document.createElement("dd");
+        RessourceNameContent.innerText = name;
+        RessourceNameContent.className = "form-group";
+        dl.appendChild(RessourceNameTitle); dl.appendChild(RessourceNameContent);
+        //Adding the Author(s)
+        AuthorsTitle = document.createElement("dt");
+        AuthorsTitle.innerText = "Author(s)";
+        AuthorsContent = document.createElement("dd");
+        AuthorsContentInput = document.createElement("input");
+        AuthorsContentInput.className = "form-control text-box single-line form-group";
+        AuthorsContent.appendChild(AuthorsContentInput);
+        dl.appendChild(AuthorsTitle); dl.appendChild(AuthorsContent);
+        //Adding the Categories
+        CategoriesTitle = document.createElement("dt");
+        CategoriesTitle.innerText = "Categories";
+        CategoriesContent = document.createElement("dd");
+        CategoriesContentInput = document.createElement("input");
+        CategoriesContentInput.className = "form-control text-box single-line form-group";
+        CategoriesContent.appendChild(CategoriesContentInput);
+        dl.appendChild(CategoriesTitle); dl.appendChild(CategoriesContent);
+        //Adding the Description
+        DescriptionTitle = document.createElement("dt");
+        DescriptionTitle.innerText = "Description";
+        DescriptionContent = document.createElement("dd");
+        DescriptionContentInput = document.createElement("input");
+        DescriptionContentInput.className = "form-control text-box single-line form-group";
+        DescriptionContent.appendChild(DescriptionContentInput);
+        dl.appendChild(DescriptionTitle); dl.appendChild(DescriptionContent);
+
+        Row.appendChild(dl);
+        Container.appendChild(Row);
+        editableDetails.appendChild(Container);
+    }
+
+    //Deleting a set of details
+    function delRowDetails(name){
+        document.getElementById(name).parentElement.removeChild(document.getElementById(name));
+    }
+           
+    function onSubmit() {
+        var myDropzone = Dropzone.forElement("#dropzoneForm");
+        var editableDetails = document.getElementById("EditableDetails");
+        for (var i = 0; i < myDropzone.files.length; i++) {
+            //alert(myDropzone.files[i]);
+            //editableDetails.Section.divBoxPrimary.dlHorizontal.ddformgroup
+            editableDetails.children[i].children[0].children[0].children[1].name = "Details[" + i + "].RessourceName";
+            editableDetails.children[i].children[0].children[0].children[3].children[0].name = "Details[" + i + "].Authors";
+        }
+    }
+</script>
+
+}
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        Add documents
+        <small></small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href='@Url.Action("Index","Repository")'><i class="fa fa-archive"></i> Repository</a></li>
+        <li class="active">Add documents</li>
+    </ol>
+</section>
+<section class="content">
+    @using (Html.BeginForm("Add", "Repository", FormMethod.Post, new { enctype = "multipart/form-data", @class = "dropzone jumbotron", id = "dropzoneForm", style = "background-color: transparent; border-style:none" }))
+    {
+        <div class="">
+            <div id="previews" class="dropzone dropzone-previews dz-clickable" >
+                <div id="dropzoneMessage" class="dz-message" style="opacity: 0.5;" data-dz-message><span>Drop files here or click to upload.</span></div>
+            </div>
+        </div>
+        <div id="EditableDetails" style=" padding-top:20px">
+            <!--Here goes all the files details-->
+        </div>
+        <section class="col-md-12">
+            <div class="box-footer">
+                <button id="submitbtn" type="submit" class="btn btn-primary" onclick="onSubmit()">Submit</button>
+            </div>
+        </section>
+    }
+</section>
